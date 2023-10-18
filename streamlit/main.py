@@ -1,69 +1,20 @@
 import streamlit as st
-from pypdf import PdfReader, PdfWriter
 import requests
-from io import BytesIO
 import pandas as pd
-import time
 
-
-context = ""
-# Function to convert a PDF from a URL to text
-def pdf_url_summary(pdf_url):
-    try:
-        # Download the PDF file from the URL
-        response = requests.get(pdf_url)
-        response.raise_for_status()
-
-        # Create a PDF file object from the downloaded content
-        pdf_file = BytesIO(response.content)
-
-        start_time=time.time()
-        # Create a PDF reader object
-        pdf_reader = PdfReader(pdf_file)
-
-        end_time = time.time()
-
-        # Initialize variables for summarization
-        num_pages = len(pdf_reader.pages)
-        total_chars = 0
-        special_chars = set()
-        
-
-        # Initialize a variable to store the extracted text
-        text = ''
-
-        start_time2=time.time()
-        # Iterate through each page and extract the text
-        for page_num in range(num_pages):
-            page = pdf_reader.pages[page_num]
-            page_text = page.extract_text()
-            text += page_text
+# def get_answer(question, context):
+#     if st.button("Get Answer"):
+#         if question:
             
-            # Update character count and collect special characters
-            total_chars += len(page_text)
-            special_chars.update(char for char in page_text if not char.isalnum())
-        
-        end_time2=time.time()
+            
+#             response = requests.post("http://127.0.0.1:8000/ask", json={"question": question, "context": context})
+#             answer = response.json()["answer"]
+#             return answer
+#         else:
+#             st.warning("Please enter a question.")
 
-        computation_time = end_time-start_time
+# Initialize context in session state
 
-        computation_time2= end_time2-start_time2
-
-        # Create a summary dictionary
-        summary = {
-            "Number of Pages": num_pages,
-            "Total Characters": total_chars,
-            "Special Characters": ", ".join(special_chars),
-            "Computation time (s) for PyReader ":round(computation_time,4),
-            "Computation time (s) for Extract Text":round(computation_time2,4),
-        }
-
-        return text, summary
-
-    except Exception as e:
-        return f"An error occurred: {e}"
-# <<<<<<< FeatureBranch_Vivek
-    
 def pdf_url_summary_nougat(pdf_url,ngrok_url):
     try:
         # Download the PDF file from the URL
@@ -92,64 +43,46 @@ def pdf_url_summary_nougat(pdf_url,ngrok_url):
 
     except Exception as e:
         return f"An error occurred: {e}"
+    
+if 'context' not in st.session_state:
+    st.session_state.context = ""
 
-def main():
-    global context
-    st.title("PDF to Text Converter")
 
-    # Input field for the PDF URL
-    pdf_url = st.text_input("Enter the URL of the PDF:")
+st.title("PDF to Text Converter & Chatbot")
+global context
+context = ""
+# Input field for the PDF URL
+conversion_choice = st.radio("Select a Conversion Library:", ["PyPDF2", "Nougat"])
+pdf_url = st.text_input("Enter the URL of the PDF:")
 
-    page_names = ['PyPDF','Nougat']
-    page = st.radio('Select Library', page_names)
 
-    if page =='PyPDF':
-        st.subheader('Analysing PDF using: PyPDF')
+if conversion_choice == "PyPDF2":
+    if st.button("Convert to Text"):
+        if pdf_url:
+             
+            # Call the PyPDF2 conversion function and display text and summary
+            response = requests.post("http://127.0.0.1:8000/convert_pdf", json={"pdf_url": pdf_url, "library": "PyPDF2"})
+            text = response.json()["text"]
+            summary = response.json()["summary"]
 
-        if st.button("Convert"):
-            if pdf_url:
-                
-                text, summary = pdf_url_summary(pdf_url)
+            st.subheader("Extracted Text:")
+            st.text(text)
 
-                if text:
-                    st.subheader("Extracted Text:")
-                    st.text(text)
+            st.subheader("Summary:")
+            st.write(summary)
 
-                    st.subheader("Summary:")
-                    st.write(summary)
-                    
-                    sections = text.split("\n") 
-
-                
-                    filtered_sections = [section for section in sections if len(section.split()) > 40]
-
-                    if filtered_sections:
-                            
-                            data = {
-                                "text": filtered_sections
-                            }
-                            df = pd.DataFrame(data)
-
-                            
-                            print("Filtered Sections:")
-                            print(df)
-                            
-                            response = requests.post("http://127.0.0.1:8000/data-collection", json={"summary": text})
-                            context = response.json()["context"]
-                            st.text(f"Context: {context}")
-
-                                
-                                
-                else:
-                    st.error("Unable to extract text from the PDF.")
+            # Allow the user to set context and ask questions
+            
+            response = requests.post("http://127.0.0.1:8000/data-collection", json={"summary": text})
+            context = response.json()["context"]
+            st.session_state.context = context
+            st.subheader("Context Set from Text Extraction")
+            st.text(f"Context: {st.session_state.context}")   
+            
         else:
             st.warning("Please enter a valid PDF URL.")
-                
 
-
-
-    if page =='Nougat':
-# <<<<<<< FeatureBranch_Vivek
+elif conversion_choice == "Nougat":
         st.subheader('Analyzing PDF using: Nougat')
 
         colab_link = "https://colab.research.google.com/drive/1be38KgK5yzhJYR5mmSLMhrNuQnLIs8P2"
@@ -164,27 +97,59 @@ def main():
                 # Call the conversion function and display the result for Nougat API              
 
                 result = pdf_url_summary_nougat(pdf_url,ngrok_url)
-
+                response = requests.post("http://127.0.0.1:8000/data-collection", json={"summary": result})
+                context = response.json()["context"]
+                st.session_state.context = context
+                
+                
                 if result:
                     st.subheader("Nougat API Response:")
                     st.write(result)
+                    st.write(f"Context: {st.session_state.context}") 
                 else:
                     st.error("Failed to analyze the PDF using Nougat API.")
-            else:
-                st.warning("Please enter a valid PDF URL.")
-
-
+                
+else:
+        st.warning("Please select a conversion library.")
+        
+        
 question = st.text_input("Enter a question:")
 if st.button("Get Answer"):
-    if question:
-        # Send the question to the data collection and embedding code
-        st.text(f"Context: {context}")
+    if question and st.session_state.context:
+        st.text(f"Context: {st.session_state.context}")
         response = requests.post("http://127.0.0.1:8000/ask", json={"question": question, "context": context})
         answer = response.json()["answer"]
+        # answer = get_answer(question, context)
         st.subheader("Answer:")
         st.write(answer)
+             
     else:
-        st.warning("Please enter a question.")
-if __name__ == "__main__":
+            st.warning("Please enter a question.")    
 
-    main()
+
+# question = st.text_input("Enter a question:")
+# @st.cache_data
+# def get_answer(question, context):
+#     print("Context:",context)
+#     response = requests.post("http://127.0.0.1:8000/ask", json={"question": question, "context": context})
+#     answer = response.json()["answer"]
+#     return answer
+# if st.button("Get Answer"):
+#     if question:
+    
+#         # response = requests.post("http://127.0.0.1:8000/ask", json={"question": question, "context": context})
+#         # answer = response.json()["answer"]
+#         answer = get_answer(question, context)
+#         st.subheader("Answer:")
+#         st.write(answer)
+#         st.text(f"Context: {context}")
+
+#         # Send the question to the FastAPI endpoint
+    
+#     else:
+#         st.warning("Please enter a question.")
+    
+
+
+
+
