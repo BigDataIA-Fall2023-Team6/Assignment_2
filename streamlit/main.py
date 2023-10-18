@@ -2,10 +2,11 @@ import streamlit as st
 from pypdf import PdfReader, PdfWriter
 import requests
 from io import BytesIO
+import pandas as pd
 import time
 
 
-context =""
+context = ""
 # Function to convert a PDF from a URL to text
 def pdf_url_summary(pdf_url):
     try:
@@ -93,7 +94,7 @@ def pdf_url_summary_nougat(pdf_url,ngrok_url):
         return f"An error occurred: {e}"
 
 def main():
-    
+    global context
     st.title("PDF to Text Converter")
 
     # Input field for the PDF URL
@@ -107,7 +108,7 @@ def main():
 
         if st.button("Convert"):
             if pdf_url:
-                # Call the conversion and summarization function
+                
                 text, summary = pdf_url_summary(pdf_url)
 
                 if text:
@@ -117,13 +118,34 @@ def main():
                     st.subheader("Summary:")
                     st.write(summary)
                     
-                    response = requests.post("http://", data={"summary": summary["Total Characters"]})
-                    context = response.json()["context"]
-                    st.text(f"Context: {context}")
+                    sections = text.split("\n") 
+
+                
+                    filtered_sections = [section for section in sections if len(section.split()) > 40]
+
+                    if filtered_sections:
+                            
+                            data = {
+                                "text": filtered_sections
+                            }
+                            df = pd.DataFrame(data)
+
+                            
+                            print("Filtered Sections:")
+                            print(df)
+                            
+                            response = requests.post("http://127.0.0.1:8000/data-collection", json={"summary": text})
+                            context = response.json()["context"]
+                            st.text(f"Context: {context}")
+
+                                
+                                
                 else:
                     st.error("Unable to extract text from the PDF.")
-            else:
-                st.warning("Please enter a valid PDF URL.")
+        else:
+            st.warning("Please enter a valid PDF URL.")
+                
+
 
 
     if page =='Nougat':
@@ -151,15 +173,18 @@ def main():
             else:
                 st.warning("Please enter a valid PDF URL.")
 
+
 question = st.text_input("Enter a question:")
 if st.button("Get Answer"):
     if question:
         # Send the question to the data collection and embedding code
-        response = requests.post("http://", data={"question": question, "context": context})
+        st.text(f"Context: {context}")
+        response = requests.post("http://127.0.0.1:8000/ask", json={"question": question, "context": context})
         answer = response.json()["answer"]
         st.subheader("Answer:")
         st.write(answer)
     else:
         st.warning("Please enter a question.")
 if __name__ == "__main__":
+
     main()
