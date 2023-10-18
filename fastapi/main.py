@@ -9,10 +9,16 @@ import requests
 from io import BytesIO
 import time
 from pypdf import PdfReader
-
+from dotenv import load_dotenv
+import os
 
 app = FastAPI()
 
+load_dotenv()
+
+api_key = os.getenv('openapi_key') #Uncomment this and run the command.
+
+openai.api_key = api_key
 
 nlp = spacy.load("en_core_web_md")
 
@@ -72,18 +78,21 @@ def pdf_url_summary(pdf_url):
 
     except Exception as e:
         return f"An error occurred: {e}"
-api_key = "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"
-openai.api_key = api_key
 
 class QueryRequest(BaseModel):
     question: str
     context: str
 
+
 class PdfLink(BaseModel):
+    pdf_url: str
+    ngrok_url:str
+
+class PyPdfLink(BaseModel):
     pdf_url: str
 
 @app.post("/convert_pdf")
-def convert_pdf(pdf_link: PdfLink):
+def convert_pdf(pdf_link: PyPdfLink):
     pdf_url = pdf_link.pdf_url
     global context
     
@@ -129,8 +138,6 @@ def strings_ranked_by_relatedness(query, text, top_n=100):
 def generate_context_from_summary(summary: str):
  
     sections = summary.split("\n") 
-
-
     filtered_sections = [section for section in sections if len(section.split()) > 40]
 
     if filtered_sections:
@@ -178,10 +185,53 @@ def ask_question(query_request: QueryRequest):
     return {"answer": response_message}
 
 
+
+
+
+
+@app.post("/nougatconvert_pdf")
+def nougatconvert_pdf(data: PdfLink):
+    pdf_url = data.pdf_url
+    ngrok_url = data.ngrok_url
+    global context
+    text = pdf_url_summary_nougat(pdf_url,ngrok_url)
+    return {"text": text}
+
+
+def pdf_url_summary_nougat(pdf_url,ngrok_url):
+    try:
+        # Download the PDF file from the URL
+        response = requests.get(pdf_url)
+        response.raise_for_status()
+
+        # Create a file-like object from the response content
+        file_data = response.content
+
+        # Prepare the file for uploading
+        files = {'file': ('uploaded_file.pdf', file_data, 'application/pdf')}
+
+        # Replace with the ngrok URL provided by ngrok
+        ng_url = ngrok_url  # Replace with your ngrok URL
+
+        # Send the POST request to the Nougat API via ngrok
+        response = requests.post(f'{ng_url}/predict/', files=files, timeout=500)
+
+        # Check if the request to the Nougat API was successful (status code 200)
+        if response.status_code == 200:
+            # Get the response content (Markdown text)
+            markdown_text = response.text
+            return markdown_text
+        else:
+            return f"Failed to make the request. Status Code: {response.status_code}"
+
+    except Exception as e:
+        return f"An error occurred: {e}"
+    
+
 if __name__ == "__main__":
     import os
 
-# Disable tokenizers parallelism
+    # Disable tokenizers parallelism
     os.environ["TOKENIZERS_PARALLELISM"] = "false"  
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
