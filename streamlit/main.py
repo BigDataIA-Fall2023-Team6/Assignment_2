@@ -1,21 +1,6 @@
 import streamlit as st
 import requests
 import pandas as pd
-
-# def get_answer(question, context):
-#     if st.button("Get Answer"):
-#         if question:
-            
-            
-#             response = requests.post("http://127.0.0.1:8000/ask", json={"question": question, "context": context})
-#             answer = response.json()["answer"]
-#             return answer
-#         else:
-#             st.warning("Please enter a question.")
-
-# Initialize context in session state
-
-
     
 if 'context' not in st.session_state:
     st.session_state.context = ""
@@ -125,6 +110,20 @@ if st.button("Get Answer"):
 #     else:
 #         st.warning("Please enter a question.")
     
+
+
+# def get_answer(question, context):
+#     if st.button("Get Answer"):
+#         if question:
+            
+            
+#             response = requests.post("http://127.0.0.1:8000/ask", json={"question": question, "context": context})
+#             answer = response.json()["answer"]
+#             return answer
+#         else:
+#             st.warning("Please enter a question.")
+
+# Initialize context in session state
 
 
 

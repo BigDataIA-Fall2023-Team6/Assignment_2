@@ -98,7 +98,7 @@ df = []
 def generate_context_from_summary(summary: str):
  
     sections = summary.split("\n") 
-    filtered_sections = [section for section in sections if len(section.split()) > 40]
+    filtered_sections = [section for section in sections if len(section.split()) > 10]
 
     if filtered_sections:      
         data = {

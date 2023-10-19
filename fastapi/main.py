@@ -5,7 +5,6 @@ from helper import *
 
 app = FastAPI()
 
-    
 class PyPdfLink(BaseModel):
     pdf_url: str
 
@@ -29,6 +28,14 @@ def convert_pdf(pdf_link: PyPdfLink):
     text, summary = pdf_url_summary(pdf_url)
     
     return {"text": text, "summary": summary}
+
+@app.post("/nougatconvert_pdf")
+def nougatconvert_pdf(data: PdfLink):
+    pdf_url = data.pdf_url
+    ngrok_url = data.ngrok_url
+    global context
+    text = pdf_url_summary_nougat(pdf_url,ngrok_url)
+    return {"text": text}
     
 @app.post("/data-collection")
 def data_collection(request_data: SummaryRequest ):
@@ -50,14 +57,6 @@ def ask_question(query_request: QueryRequest):
     response_message = response["choices"][0]["message"]["content"]
     print(df)
     return {"answer": response_message}
-
-@app.post("/nougatconvert_pdf")
-def nougatconvert_pdf(data: PdfLink):
-    pdf_url = data.pdf_url
-    ngrok_url = data.ngrok_url
-    global context
-    text = pdf_url_summary_nougat(pdf_url,ngrok_url)
-    return {"text": text}
 
 if __name__ == "__main__":
     import os
