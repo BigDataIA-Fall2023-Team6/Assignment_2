@@ -1,0 +1,24 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+fastapi = "*"
+pandas = "*"
+spacy = "*"
+sklearn = "*"
+cosine-similarity = "*"
+scikit-learn = "*"
+python-multipart = "*"
+tiktoken = "*"
+openai = "*"
+transformers = "*"
+torch = "*"
+tensorflow = "*"
+
+[dev-packages]
+uvicorn = "*"
+
+[requires]
+python_version = "3.10.12"
