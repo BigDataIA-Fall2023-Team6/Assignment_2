@@ -7,10 +7,10 @@ In the era of digital information, the extraction of textual content from PDF do
 ---
 
 ### Links 📎
-* 📕 Codelab Doc - [link]()
-* 1️⃣ Streamlit Application - [link]()
-* 📕 Colab Notebook - [link]()
-* 📊 Datasets (SEC.gov) - [link](https://www.sec.gov/forms)
+*  Codelab Doc - [link]()
+*  Streamlit Application - [link]()
+*  Colab Notebook - [link]()
+*  Datasets (SEC.gov) - [link](https://www.sec.gov/forms)
 
 ### Tools
 * 🔧 Streamlit - [link](https://streamlit.io/)
@@ -26,7 +26,7 @@ In the era of digital information, the extraction of textual content from PDF do
 
 ## PDF to Text Extraction and OpenAI Chatbot
 
-### Architecture 👷🏻‍♂️
+### Architecture 
 
 ![alt text]()
 
@@ -135,7 +135,7 @@ We have created this tool to understand the basic PDF to Text conversation and i
 If you encounter any issues or have suggestions for improvements, please feel free to open an issue or contribute to this project. Your feedback is valuable in enhancing the tool's functionality and usability.
 
 ---
-## Contribution 🤝
+## Contribution
 *   Abhishek : 33`%` 
 *   Dilip : 33`%`
 *   Vivek : 34`%`
@@ -151,7 +151,7 @@ If you encounter any issues or have suggestions for improvements, please feel fr
   - NUID 
   - Email 
 
-## Individual Distribution ⚖️
+## Individual Distribution
 
 | **Developer** 	|          **Deliverables**          	|
 |:-------------:	|:----------------------------------:	|
