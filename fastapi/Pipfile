@@ -6,19 +6,24 @@ name = "pypi"
 [packages]
 fastapi = "*"
 pandas = "*"
-spacy = "*"
-sklearn = "*"
-cosine-similarity = "*"
-scikit-learn = "*"
-python-multipart = "*"
-tiktoken = "*"
-openai = "*"
+uvicorn = "*"
+requests = "*"
+pypdf = "*"
 transformers = "*"
-torch = "*"
-tensorflow = "*"
+python-dotenv = "*"
+openai = "*"
+scikit-learn = "*"
+sklearn = "*"
+spacy = "==3.7.1"
+cosine-similarity = "*"
+tiktoken = "*"
+python-multipart = "*"
+gunicorn = "*"
 
 [dev-packages]
-uvicorn = "*"
 
 [requires]
 python_version = "3.10.12"
+
+[pipenv]
+allow_prereleases = true

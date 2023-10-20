@@ -1,6 +1,12 @@
 import streamlit as st
 import requests
 import pandas as pd
+import boto3
+from io import StringIO
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # def get_answer(question, context):
 #     if st.button("Get Answer"):
@@ -27,7 +33,8 @@ context = ""
 # Input field for the PDF URL
 conversion_choice = st.radio("Select a Conversion Library:", ["PyPDF2", "Nougat"])
 pdf_url = st.text_input("Enter the URL of the PDF:")
-
+url_filename = os.path.basename(pdf_url)
+s3_file_name = os.path.splitext(url_filename)[0] + ".txt"
 
 if conversion_choice == "PyPDF2":
     if st.button("Convert to Text"):
@@ -40,6 +47,28 @@ if conversion_choice == "PyPDF2":
 
             st.subheader("Extracted Text:")
             st.text(text)
+
+            # Extract the filename from the URL and change its extension to .txt
+
+            aws_bucket_name = os.getenv('BUCKET_NAME')
+
+            try:
+                s3_client = boto3.client('s3',
+                    region_name='us-east-1',
+                    aws_access_key_id=os.getenv('AWS_ACCESS_KEY'),
+                    aws_secret_access_key=os.getenv('AWS_SECRET_KEY'))
+                
+                s3_client.put_object(Bucket=aws_bucket_name, Key=s3_file_name, Body=text)
+
+                # Provide the file for download
+                st.download_button(
+                    label="Download",
+                    data=text,
+                    key="text_file",
+                    file_name=s3_file_name,
+                )
+            except Exception as e:
+                print("hello")
 
             st.subheader("Summary:")
             st.write(summary)
@@ -74,6 +103,26 @@ elif conversion_choice == "Nougat":
 
                 # result = pdf_url_summary_nougat(pdf_url,ngrok_url)
 
+                aws_bucket_nme = os.getenv('NOUGAT_BUCKET_NAME')
+
+                try:
+                    s3_client = boto3.client('s3',
+                        region_name='us-east-1',
+                        aws_access_key_id=os.getenv('AWS_ACCESS_KEY'),
+                        aws_secret_access_key=os.getenv('AWS_SECRET_KEY'))
+                    
+                    s3_client.put_object(Bucket=aws_bucket_nme, Key=s3_file_name, Body=text)
+
+                    # Provide the file for download
+                    st.download_button(
+                        label="Download",
+                        data=text,
+                        key="text_file",
+                        file_name=s3_file_name,
+                    )
+                except Exception as e:
+                    print("hello")
+
                 response = requests.post("http://127.0.0.1:8000/data-collection", json={"summary": text})
                 context = response.json()["context"]
                 st.session_state.context = context
@@ -81,6 +130,8 @@ elif conversion_choice == "Nougat":
                 if text:
                     st.subheader("Nougat API Response:")
                     st.write(text)
+
+                    
                     st.write(f"Context: {st.session_state.context}") 
                 else:
                     st.error("Failed to analyze the PDF using Nougat API.")
