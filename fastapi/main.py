@@ -2,6 +2,7 @@ from fastapi import FastAPI, Query
 from pydantic import BaseModel
 import os
 from helper import *
+from typing import Dict, List, Optional, Any, Union
 
 app = FastAPI()
 
@@ -14,10 +15,12 @@ class PdfLink(BaseModel):
 
 class SummaryRequest(BaseModel):
     summary: str
+    # dataframe: Optional[Dict[str, Any]] = None
 
 class QueryRequest(BaseModel):
     question: str
     context: str
+    # dataframe: Dict[str, Any]
 
 
 @app.post("/convert_pdf")
@@ -39,8 +42,16 @@ def nougatconvert_pdf(data: PdfLink):
     
 @app.post("/data-collection")
 def data_collection(request_data: SummaryRequest ):
+    # context = request_data.summary
+    # df = request_data.dataframe
+    global context 
+    context = generate_context_from_summary(request_data.summary)  #context, df
+    return {"context": context} # "dataframe": df.to_dict()
+
+@app.post("/data-collection_nougat")
+def data_collection(request_data: SummaryRequest ):
     global  context 
-    context = generate_context_from_summary(request_data.summary)
+    context = generate_context_from_summary_nougat(request_data.summary)
     return {"context": context}
 
 @app.post("/ask")
@@ -53,7 +64,7 @@ def ask_question(query_request: QueryRequest):
         {"role": "system", "content": "You answer questions about SEC government data."},
         {"role": "user", "content": message},
     ]
-    response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=messages, temperature=0)
+    response = openai.ChatCompletion.create(model=GPT_MODEL, messages=messages, temperature=0)
     response_message = response["choices"][0]["message"]["content"]
     print(df)
     return {"answer": response_message}
