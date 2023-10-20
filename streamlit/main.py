@@ -97,7 +97,7 @@ elif conversion_choice == "Nougat":
                 # Call the conversion function and display the result for Nougat API              
 
                 result = pdf_url_summary_nougat(pdf_url,ngrok_url)
-                response = requests.post("http://127.0.0.1:8000/data-collection", json={"summary": result})
+                response = requests.post("http://127.0.0.1:8000/data-collection_nougat", json={"summary": result})
                 context = response.json()["context"]
                 st.session_state.context = context
                 
