@@ -5,9 +5,13 @@ from pypdf import PdfReader
 from transformers import GPT2TokenizerFast
 from dotenv import load_dotenv
 import os
-import spacy
 import pandas as pd
 import openai
+from sklearn.metrics.pairwise import cosine_similarity
+import numpy as np
+import faiss
+import pickle
+import spacy
 
 def pdf_url_summary(pdf_url):
     try:
@@ -76,8 +80,7 @@ def pdf_url_summary_nougat(pdf_url,ngrok_url):
         # Prepare the file for uploading
         files = {'file': ('uploaded_file.pdf', file_data, 'application/pdf')}
 
-        # Replace with the ngrok URL provided by ngrok
-        ng_url = ngrok_url  # Replace with your ngrok URL
+        ng_url = ngrok_url
 
         # Send the POST request to the Nougat API via ngrok
         response = requests.post(f'{ng_url}/predict/', files=files, timeout=500)
@@ -95,21 +98,49 @@ def pdf_url_summary_nougat(pdf_url,ngrok_url):
 
 df = []
 
-def generate_context_from_summary(summary: str):
- 
-    sections = summary.split("\n") 
-    filtered_sections = [section for section in sections if len(section.split()) > 10]
 
-    if filtered_sections:      
+def generate_context_from_summary(summary: str): 
+    sections = summary.split("\n") 
+    filtered_sections = [section for section in sections if len(section.split()) > 20]
+
+    if filtered_sections:
+        
         data = {
             "text": filtered_sections
         }
+
         df = pd.DataFrame(data)
-       
+        print(df)
+
+        
+        context = "\n".join(filtered_sections)
+
+        return context
+    else:
+        print("No filtered sections found in the summary.")
+        return "Unable to extract text from the PDF"
+
+def generate_context_from_summary_nougat(summary: str):
+    # Split sections based on double newline characters
+    sections = summary.split("\n") 
+    
+    # Filter sections that have more than 20 words (adjust as needed)
+    filtered_sections = [section for section in sections if len(section.split()) > 40]
+
+    if filtered_sections:
+        data = {
+            "text": filtered_sections
+        }
+
+        # Create a DataFrame for better visualization
+        df = pd.DataFrame(data)
+
         print("Filtered Sections:")
         print(df)
 
+        # Join the filtered sections to create context
         context = "\n".join(filtered_sections)
+
         return context
     else:
         print("No filtered sections found in the summary.")
@@ -143,13 +174,144 @@ def query_message(query, text,  token_budget):
     return message + question
 
 def strings_ranked_by_relatedness(query, text, top_n=100):
-    query_embedding = nlp(query)
-    text_embeddings = [nlp(section) for section in text]
-    similarities = [query_embedding.similarity(embedding) for embedding in text_embeddings]
-    
+    query_embedding = nlp(query).vector
+    text_embeddings = [nlp(section).vector for section in text]
+    similarities = [cosine_similarity(query_embedding, embedding) for embedding in text_embeddings]
+
     sorted_indices = sorted(range(len(similarities)), key=lambda i: similarities[i], reverse=True)
-    
+
     top_strings = [text[i] for i in sorted_indices[:top_n]]
     top_relatednesses = [similarities[i] for i in sorted_indices[:top_n]]
-    
+
     return top_strings, top_relatednesses
+
+
+def cosine_similarity(vector1, vector2):
+    dot_product = sum(a * b for a, b in zip(vector1, vector2))
+    magnitude1 = sum(a * a for a in vector1) ** 0.5
+    magnitude2 = sum(b * b for b in vector2) ** 0.5
+    if magnitude1 == 0 or magnitude2 == 0:
+        return 0
+    return dot_product / (magnitude1 * magnitude2)
+
+GPT_MODEL = "gpt-3.5-turbo"
+
+def create_embedding(context):
+    EMBEDDING_MODEL = "text-embedding-ada-002"
+    try:
+        response = openai.Embedding.create(
+            model=EMBEDDING_MODEL,
+            input= context
+        )
+        embeddings = [item['embedding'] for item in response['data']]
+        flattened_embeddings = [value for sublist in embeddings for value in sublist]
+        return flattened_embeddings  #np.array(flattened_embeddings).astype('float32')
+    except Exception as e:
+        print(f"Error in generating Embedding: {e}")
+        return ""
+
+## Generate Context Based ON OPEN AI EMBEDDING
+
+# def generate_context_from_summary(summary: str):
+ 
+#     sections = summary.split("\n") 
+#     filtered_sections = [section for section in sections if len(section.split()) > 20]
+
+#     if filtered_sections:      
+#         data = {
+#             "text": filtered_sections
+#         }
+#         df = pd.DataFrame(data)        
+
+#         df['embedding']=df["text"].apply(create_embedding)
+
+#         context = "\n".join(filtered_sections)
+#         return context, df
+#     else:
+#         print("No filtered sections found in the summary.")
+#         return "Unable to extract text from the PDF"
+
+# def generate_context_from_summary(summary: str):
+#     sections = summary.split("\n") 
+#     filtered_sections = [section for section in sections if len(section.split()) > 20]
+
+#     if not filtered_sections:
+#         print("No filtered sections found in the summary.")
+#         return "Unable to extract text from the PDF", pd.DataFrame()
+
+#     data = {"text": filtered_sections}
+#     df = pd.DataFrame(data)
+#     # df['embedding'] = df["text"].apply(create_embedding)
+#     # print(df['embedding'].head())
+
+#     dimension = len(df['embedding'][0])
+#     index = faiss.IndexFlatL2(dimension)
+#     # embeddings_matrix = np.vstack(df['embedding'].values)
+
+#     # Adding vectors to the index
+#     embeddings_matrix = np.array(df['embedding'].tolist(), dtype=np.float32)
+#     index.add(embeddings_matrix)
+
+#     print(embeddings_matrix.shape)
+#     print(embeddings_matrix.dtype)
+
+#     # # Create a Faiss index
+#     # index = faiss.IndexFlatL2(embeddings_matrix.shape[1])
+#     # index.add(embeddings_matrix)
+
+#     # print(df)
+#     # max_length = df['embedding'].apply(len).max()
+#     # print(max_length)
+#     # index = faiss.IndexFlatL2(max_length)
+#     # index.add(df['embedding'])
+
+#     # Saving
+#     with open("faiss_data1.pkl", "wb") as f:
+#         pickle.dump(index, f)
+    
+#     context = "\n".join(filtered_sections)
+
+#     return context, df
+
+
+
+################################
+# Generating Similarity
+################################
+
+# def strings_ranked_by_relatedness(query, text, top_n=20):
+
+#     with open("faiss_data.pkl", "rb") as f:
+#         index, df = pickle.load(f)
+
+#     query_embedding = create_embedding(query).reshape(1, -1)
+#     # df = pd.DataFrame.from_dict(text)
+#     # Assuming the 'embedding' column of the df contains embeddings as lists
+
+#     D, I = index.search(query_embedding, k=1)  # k=1 to get the most similar entry
+
+#     # Return the most similar text from DataFrame
+#     return df.iloc[I[0][0]]["text"]
+
+
+#     # similarities = [cosine_similarity([query_embedding], [embedding])[0][0] for embedding in df['embedding']]
+    
+#     # sorted_indices = sorted(range(len(similarities)), key=lambda i: similarities[i], reverse=True)
+    
+#     # top_strings = df['context'].iloc[sorted_indices[:top_n]].tolist()
+#     # top_relatednesses = [similarities[i] for i in sorted_indices[:top_n]]
+#     # return top_strings, top_relatednesses
+
+#     # query_embedding = create_embedding(query)
+#     # df = pd.DataFrame.from_dict(text)
+
+#     # # text_embeddings = create_embedding(text)
+#     # similarities = [query_embedding.similarity(embedding) for embedding in df['embedding']]
+    
+#     # # similarities = [cosine_similarity(np.vstack(query_embedding.to_list()), np.vstack(text_embeddings.to_list()))]
+#     # sorted_indices = sorted(range(len(similarities)), key=lambda i: similarities[i], reverse=True)
+    
+#     # top_strings = [text[i] for i in sorted_indices[:top_n]]
+#     # top_relatednesses = [similarities[i] for i in sorted_indices[:top_n]]
+#     # print(top_strings)
+#     # return top_strings, top_relatednesses
