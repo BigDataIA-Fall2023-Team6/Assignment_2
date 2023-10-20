@@ -14,6 +14,8 @@ pydantic = "*"
 uvicorn = "*"
 scikit-learn = "*"
 gunicorn = "*"
+python-dotenv = "*"
+spacy = "==3.7.1"
 
 [dev-packages]
 
