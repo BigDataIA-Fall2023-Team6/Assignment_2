@@ -116,7 +116,7 @@ else:
 question = st.text_input("Enter a question:")
 if st.button("Get Answer"):
     if question and st.session_state.context:
-        st.text(f"Context: {st.session_state.context}")
+        st.write(f"Context: {st.session_state.context}")
         response = requests.post("http://127.0.0.1:8000/ask", json={"question": question, "context": context})
         answer = response.json()["answer"]
         # answer = get_answer(question, context)
@@ -148,8 +148,3 @@ if st.button("Get Answer"):
     
 #     else:
 #         st.warning("Please enter a question.")
-    
-
-
-
-

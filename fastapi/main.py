@@ -9,12 +9,13 @@ import requests
 from io import BytesIO
 import time
 from pypdf import PdfReader
+from sklearn.metrics.pairwise import cosine_similarity
 
 
 app = FastAPI()
 
 
-nlp = spacy.load("en_core_web_md")
+# nlp = spacy.load("en_core_web_md")
 
 df = []
 
@@ -72,7 +73,8 @@ def pdf_url_summary(pdf_url):
 
     except Exception as e:
         return f"An error occurred: {e}"
-api_key = "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"
+GPT_MODEL = "gpt-3.5-turbo"
+api_key = "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"
 openai.api_key = api_key
 
 class QueryRequest(BaseModel):
@@ -93,7 +95,7 @@ def convert_pdf(pdf_link: PdfLink):
 
 
 def num_tokens(text):
-    tokenizer = GPT2TokenizerFast.from_pretrained("gpt2")
+    tokenizer = GPT2TokenizerFast.from_pretrained(GPT_MODEL)
     encoding = tokenizer.encode(text, add_special_tokens=False)
     return len(encoding)
 
@@ -113,17 +115,51 @@ def query_message(query, text,  token_budget):
             message += next_document
     return message + question
 
+# def strings_ranked_by_relatedness(query, text, top_n=100):
+#     query_embedding = openai.Embed.create(model=GPT_MODEL, data=query)
+#     text_embeddings = openai.Embed.create(model=GPT_MODEL, data=text)
+#     # similarities = [query_embedding.similarity(embedding) for embedding in text_embeddings]
+#     similarities = [cosine_similarity(query_embedding['embeddings'][0], embedding['embeddings'][0]) for embedding in text_embeddings['embeddings']]
+#     sorted_indices = sorted(range(len(similarities)), key=lambda i: similarities[i], reverse=True)
+    
+#     top_strings = [text[i] for i in sorted_indices[:top_n]]
+#     top_relatednesses = [similarities[i] for i in sorted_indices[:top_n]]
+    
+#     return top_strings, top_relatednesses
+def create_embedding(context):
+    try:
+        response = openai.Embedding.create(
+            model= "text-embedding-ada-002",
+            input=context
+        )
+        embeddings = [item['embedding'] for item in response['data']]
+        flattened_embeddings = [value for sublist in embeddings for value in sublist]
+        return flattened_embeddings
+    except Exception as e:
+        print(f"Error in generating Embedding: {e}")
+        return ""
+
+
 def strings_ranked_by_relatedness(query, text, top_n=100):
-    query_embedding = nlp(query)
-    text_embeddings = [nlp(section) for section in text]
-    similarities = [query_embedding.similarity(embedding) for embedding in text_embeddings]
-    
+    query_embedding = create_embedding(query)
+    text_embeddings = text_embeddings = [create_embedding(section) for section in text]
+    similarities = [cosine_similarity(query_embedding, embedding) for embedding in text_embeddings]
+
     sorted_indices = sorted(range(len(similarities)), key=lambda i: similarities[i], reverse=True)
-    
+
     top_strings = [text[i] for i in sorted_indices[:top_n]]
     top_relatednesses = [similarities[i] for i in sorted_indices[:top_n]]
-    
+
     return top_strings, top_relatednesses
+
+
+def cosine_similarity(vector1, vector2):
+    dot_product = sum(a * b for a, b in zip(vector1, vector2))
+    magnitude1 = sum(a * a for a in vector1) ** 0.5
+    magnitude2 = sum(b * b for b in vector2) ** 0.5
+    if magnitude1 == 0 or magnitude2 == 0:
+        return 0
+    return dot_product / (magnitude1 * magnitude2)
 
 
 def generate_context_from_summary(summary: str):
@@ -131,7 +167,7 @@ def generate_context_from_summary(summary: str):
     sections = summary.split("\n") 
 
 
-    filtered_sections = [section for section in sections if len(section.split()) > 40]
+    filtered_sections = [section for section in sections if len(section.split()) > 20]
 
     if filtered_sections:
         
@@ -172,7 +208,7 @@ def ask_question(query_request: QueryRequest):
         {"role": "system", "content": "You answer questions about SEC government data."},
         {"role": "user", "content": message},
     ]
-    response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=messages, temperature=0)
+    response = openai.ChatCompletion.create(model=GPT_MODEL, messages=messages, temperature=0)
     response_message = response["choices"][0]["message"]["content"]
     print(df)
     return {"answer": response_message}
