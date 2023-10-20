@@ -1,3 +1,4 @@
-pandas=="*"
-streamlit==1.27.1
-requests == "*"
+packaging==23.2
+pandas==2.1.1
+requests==2.31.0
+streamlit==1.27.2
