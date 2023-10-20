@@ -10,12 +10,13 @@ from io import BytesIO
 import time
 from pypdf import PdfReader
 from sklearn.metrics.pairwise import cosine_similarity
+import re
 
 
 app = FastAPI()
 
 
-# nlp = spacy.load("en_core_web_md")
+nlp = spacy.load("en_core_web_md")
 
 df = []
 
@@ -126,23 +127,23 @@ def query_message(query, text,  token_budget):
 #     top_relatednesses = [similarities[i] for i in sorted_indices[:top_n]]
     
 #     return top_strings, top_relatednesses
-def create_embedding(context):
-    try:
-        response = openai.Embedding.create(
-            model= "text-embedding-ada-002",
-            input=context
-        )
-        embeddings = [item['embedding'] for item in response['data']]
-        flattened_embeddings = [value for sublist in embeddings for value in sublist]
-        return flattened_embeddings
-    except Exception as e:
-        print(f"Error in generating Embedding: {e}")
-        return ""
+# def create_embedding(context):
+#     try:
+#         response = openai.Embedding.create(
+#             model= "text-embedding-ada-002",
+#             input=context
+#         )
+#         embeddings = [item['embedding'] for item in response['data']]
+#         flattened_embeddings = [value for sublist in embeddings for value in sublist]
+#         return flattened_embeddings
+#     except Exception as e:
+#         print(f"Error in generating Embedding: {e}")
+#         return ""
 
 
 def strings_ranked_by_relatedness(query, text, top_n=100):
-    query_embedding = create_embedding(query)
-    text_embeddings = text_embeddings = [create_embedding(section) for section in text]
+    query_embedding = nlp(query).vector
+    text_embeddings = text_embeddings = [nlp(section).vector for section in text]
     similarities = [cosine_similarity(query_embedding, embedding) for embedding in text_embeddings]
 
     sorted_indices = sorted(range(len(similarities)), key=lambda i: similarities[i], reverse=True)
@@ -189,6 +190,32 @@ def generate_context_from_summary(summary: str):
         print("No filtered sections found in the summary.")
         return "Unable to extract text from the PDF"
 
+def generate_context_from_summary_nougat(summary: str):
+    # Split sections based on double newline characters
+    sections = re.split(r'\n\n', summary)
+    
+    # Filter sections that have more than 20 words (adjust as needed)
+    filtered_sections = [section for section in sections if len(section.split()) > 40]
+
+    if filtered_sections:
+        data = {
+            "text": filtered_sections
+        }
+
+        # Create a DataFrame for better visualization
+        df = pd.DataFrame(data)
+
+        print("Filtered Sections:")
+        print(df)
+
+        # Join the filtered sections to create context
+        context = "\n".join(filtered_sections)
+
+        return context
+    else:
+        print("No filtered sections found in the summary.")
+        return "Unable to extract text from the PDF"
+
 class SummaryRequest(BaseModel):
     summary: str
     
@@ -196,6 +223,12 @@ class SummaryRequest(BaseModel):
 def data_collection(request_data: SummaryRequest ):
     global  context 
     context = generate_context_from_summary(request_data.summary)
+    return {"context": context}
+
+@app.post("/data-collection_nougat")
+def data_collection(request_data: SummaryRequest ):
+    global  context 
+    context = generate_context_from_summary_nougat(request_data.summary)
     return {"context": context}
 
 @app.post("/ask")
