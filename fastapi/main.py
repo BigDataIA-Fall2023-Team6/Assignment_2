@@ -11,8 +11,10 @@ import time
 from pypdf import PdfReader
 from sklearn.metrics.pairwise import cosine_similarity
 import re
+import os
+from dotenv import load_dotenv
 
-
+load_dotenv()
 app = FastAPI()
 
 
@@ -75,7 +77,7 @@ def pdf_url_summary(pdf_url):
     except Exception as e:
         return f"An error occurred: {e}"
 GPT_MODEL = "gpt-3.5-turbo"
-api_key = "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"
+api_key = os.getenv("api_key")
 openai.api_key = api_key
 
 class QueryRequest(BaseModel):
