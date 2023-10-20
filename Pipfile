@@ -1,0 +1,22 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+fastapi = "*"
+requests = "*"
+pypdf = "*"
+transformers = "*"
+spacy = "*"
+openai = "*"
+pandas = "*"
+pydantic = "*"
+uvicorn = "*"
+scikit-learn = "*"
+gunicorn = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.10"
