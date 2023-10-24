@@ -8,7 +8,7 @@ In the era of digital information, the extraction of textual content from PDF do
 
 ### Youtube
 
-[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/YOUTUBE_VIDEO_ID_HERE/0.jpg)](https://www.youtube.com/watch?v=cE4fn5nQBd8)
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/cE4fn5nQBd8/0.jpg)](https://www.youtube.com/watch?v=cE4fn5nQBd8 "OpenAI Chatbot on PDF Text Extraction")
 
 
 ### Links 📎
