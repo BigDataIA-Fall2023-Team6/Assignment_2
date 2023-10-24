@@ -6,13 +6,9 @@ In the era of digital information, the extraction of textual content from PDF do
 
 ---
 
-### Youtube Demo
+### Video Demo on YouTube 🎬
 
 [![Video](https://img.youtube.com/vi/cE4fn5nQBd8/0.jpg)](https://www.youtube.com/watch?v=cE4fn5nQBd8 "OpenAI Chatbot on PDF Text Extraction")
-
-<a href="https://www.youtube.com/watch?v=cE4fn5nQBd8">
-  <img src="https://img.youtube.com/vi/cE4fn5nQBd8/0.jpg" width="500" >
-</a>
 
 ### Links 📎
 *  Codelab Doc - [link](https://codelabs-preview.appspot.com/?file_id=1xeNlrRTGmwLhPOb50Wtx1lP7imHFDpwm9v_zkbpOvAA#0)
