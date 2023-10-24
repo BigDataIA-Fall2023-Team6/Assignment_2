@@ -6,10 +6,14 @@ In the era of digital information, the extraction of textual content from PDF do
 
 ---
 
+### Youtube
+
+[link](https://youtu.be/cE4fn5nQBd8)
+
+
 ### Links 📎
-*  Codelab Doc - [link]()
-*  Streamlit Application - [link]()
-*  Colab Notebook - [link]()
+*  Codelab Doc - [link](https://codelabs-preview.appspot.com/?file_id=1xeNlrRTGmwLhPOb50Wtx1lP7imHFDpwm9v_zkbpOvAA#0)
+*  Colab Notebook - [link](https://colab.research.google.com/drive/1be38KgK5yzhJYR5mmSLMhrNuQnLIs8P2)
 *  Datasets (SEC.gov) - [link](https://www.sec.gov/forms)
 
 ### Tools
