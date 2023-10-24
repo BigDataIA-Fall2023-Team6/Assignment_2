@@ -6,7 +6,7 @@ In the era of digital information, the extraction of textual content from PDF do
 
 ---
 
-### Youtube
+### Youtube Demo
 
 [![Video](https://img.youtube.com/vi/cE4fn5nQBd8/0.jpg)](https://www.youtube.com/watch?v=cE4fn5nQBd8 "OpenAI Chatbot on PDF Text Extraction")
 
