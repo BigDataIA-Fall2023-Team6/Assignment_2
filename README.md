@@ -8,7 +8,7 @@ In the era of digital information, the extraction of textual content from PDF do
 
 ### Youtube
 
-[link](https://youtu.be/cE4fn5nQBd8)
+[](https://youtu.be/cE4fn5nQBd8)
 
 
 ### Links 📎
