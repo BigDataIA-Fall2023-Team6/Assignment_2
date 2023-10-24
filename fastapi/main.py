@@ -5,6 +5,7 @@ from helper import *
 from typing import Dict, List, Optional, Any, Union
 
 app = FastAPI()
+GPT_MODEL = "gpt-3.5-turbo"
 
 class PyPdfLink(BaseModel):
     pdf_url: str
@@ -61,12 +62,11 @@ def ask_question(query_request: QueryRequest):
     token_budget = 4096 - 500
     message = query_message(query, context, token_budget)
     messages = [
-        {"role": "system", "content": "You answer questions about SEC government data."},
+        {"role": "system", "content": "You answer questions about SEC government data and provided context only"},
         {"role": "user", "content": message},
     ]
     response = openai.ChatCompletion.create(model=GPT_MODEL, messages=messages, temperature=0)
     response_message = response["choices"][0]["message"]["content"]
-    print(df)
     return {"answer": response_message}
 
 if __name__ == "__main__":

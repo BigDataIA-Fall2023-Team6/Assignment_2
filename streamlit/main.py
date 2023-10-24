@@ -77,7 +77,7 @@ if conversion_choice == "PyPDF2":
             context = response.json()["context"]
             st.session_state.context = context
             st.subheader("Context Set from Text Extraction")
-            st.text(f"Context: {st.session_state.context}")   
+            st.write(f"Context: {st.session_state.context}")   
             
         else:
             st.warning("Please enter a valid PDF URL.")

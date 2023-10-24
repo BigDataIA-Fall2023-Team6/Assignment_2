@@ -9,9 +9,7 @@ import pandas as pd
 import openai
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
-import faiss
-import pickle
-import spacy
+from scipy import spatial
 
 def pdf_url_summary(pdf_url):
     try:
@@ -101,20 +99,15 @@ df = []
 
 def generate_context_from_summary(summary: str): 
     sections = summary.split("\n") 
-    filtered_sections = [section for section in sections if len(section.split()) > 20]
+    filtered_sections = [section for section in sections if len(section.split()) > 15]
 
     if filtered_sections:
         
         data = {
             "text": filtered_sections
         }
-
         df = pd.DataFrame(data)
-        print(df)
-
-        
         context = "\n".join(filtered_sections)
-
         return context
     else:
         print("No filtered sections found in the summary.")
@@ -125,7 +118,7 @@ def generate_context_from_summary_nougat(summary: str):
     sections = summary.split("\n") 
     
     # Filter sections that have more than 20 words (adjust as needed)
-    filtered_sections = [section for section in sections if len(section.split()) > 40]
+    filtered_sections = [section for section in sections if len(section.split()) > 15]
 
     if filtered_sections:
         data = {
@@ -150,7 +143,7 @@ load_dotenv()
 api_key = os.getenv('openapi_key') #Uncomment this and run the command.
 openai.api_key = api_key
 
-nlp = spacy.load("en_core_web_md")
+# nlp = spacy.load("en_core_web_md")
 
 def num_tokens(text):
     tokenizer = GPT2TokenizerFast.from_pretrained("gpt2")
@@ -167,37 +160,65 @@ def query_message(query, text,  token_budget):
         next_document = f'\n\nSEC Document Section:\n"""\n{string}\n"""'
         if num_tokens(message + next_document + question) > remaining_budget:
             message += question
-            
             break
         else:
             message += next_document
     return message + question
 
-def strings_ranked_by_relatedness(query, text, top_n=100):
-    query_embedding = nlp(query).vector
-    text_embeddings = [nlp(section).vector for section in text]
-    similarities = [cosine_similarity(query_embedding, embedding) for embedding in text_embeddings]
+# def strings_ranked_by_relatedness(query, text, top_n=100):
+#     query_embedding = nlp(query).vector
+#     text_embeddings = [nlp(section).vector for section in text]
+#     similarities = [cosine_similarity(query_embedding, embedding) for embedding in text_embeddings]
 
-    sorted_indices = sorted(range(len(similarities)), key=lambda i: similarities[i], reverse=True)
+#     sorted_indices = sorted(range(len(similarities)), key=lambda i: similarities[i], reverse=True)
 
-    top_strings = [text[i] for i in sorted_indices[:top_n]]
-    top_relatednesses = [similarities[i] for i in sorted_indices[:top_n]]
+#     top_strings = [text[i] for i in sorted_indices[:top_n]]
+#     top_relatednesses = [similarities[i] for i in sorted_indices[:top_n]]
 
-    return top_strings, top_relatednesses
+#     return top_strings, top_relatednesses
 
 
-def cosine_similarity(vector1, vector2):
-    dot_product = sum(a * b for a, b in zip(vector1, vector2))
-    magnitude1 = sum(a * a for a in vector1) ** 0.5
-    magnitude2 = sum(b * b for b in vector2) ** 0.5
-    if magnitude1 == 0 or magnitude2 == 0:
-        return 0
-    return dot_product / (magnitude1 * magnitude2)
+# def cosine_similarity(vector1, vector2):
+#     dot_product = sum(a * b for a, b in zip(vector1, vector2))
+#     magnitude1 = sum(a * a for a in vector1) ** 0.5
+#     magnitude2 = sum(b * b for b in vector2) ** 0.5
+#     if magnitude1 == 0 or magnitude2 == 0:
+#         return 0
+#     return dot_product / (magnitude1 * magnitude2)
 
+EMBEDDING_MODEL = "text-embedding-ada-002"
 GPT_MODEL = "gpt-3.5-turbo"
 
+
+def strings_ranked_by_relatedness(
+    query: str,
+    text: str,
+    relatedness_fn=lambda x, y: 1 - spatial.distance.cosine(x, y),
+    top_n: int = 20
+) -> tuple[list[str], list[float]]:
+    
+    try:
+        query_embedding_response = openai.Embedding.create(
+        model=EMBEDDING_MODEL,
+        input=query,
+        )
+    except Exception as e:
+        print(e)
+        return ""
+    
+    query_embedding = query_embedding_response["data"][0]["embedding"]
+    df = pd.DataFrame({"context":[]})
+    df = pd.append({"context":text},ignore_index=True)
+    text_embeddings = create_embedding(text)
+    strings_and_relatednesses = [
+        (df["context"], relatedness_fn(query_embedding, text_embeddings))
+        for i, row in df.iterrows()
+    ]
+    strings_and_relatednesses.sort(key=lambda x: x[1], reverse=True)
+    strings, relatednesses = zip(*strings_and_relatednesses)
+    return strings[:top_n], relatednesses[:top_n]
+
 def create_embedding(context):
-    EMBEDDING_MODEL = "text-embedding-ada-002"
     try:
         response = openai.Embedding.create(
             model=EMBEDDING_MODEL,
@@ -315,3 +336,5 @@ def create_embedding(context):
 #     # top_relatednesses = [similarities[i] for i in sorted_indices[:top_n]]
 #     # print(top_strings)
 #     # return top_strings, top_relatednesses
+
+
