@@ -5,6 +5,8 @@ OpenAI Chatbot on PDF Text Extraction
 In the era of digital information, the extraction of textual content from PDF documents for further analysis and interaction has become a pressing need. This project presents the design and development of a streamlit application, aimed at facilitating seamless PDF to text conversion. We have extracted text from the PDF using Nougat and PyPDF Library. To enhance the experience we have deployed FASTAPIs for smooth connection, enabling rapid and reliable interactions within the components of the application. Once the text is extracted from the PDF, users can pose questions related to the content, to which the OpenAI Chatbot provides pertinent answers. 
 
 ---
+### Application:
+*  Streamlit Application - [link](https://mainpy-denrsvy8ybbnz3gmge5qbw.streamlit.app)
 
 ### Video Demo on YouTube 🎬
 
@@ -128,7 +130,7 @@ OR
 ### Observations and Challenges
 
 - When we limited the word counts to 40 to generated the context- No context was generated from the small pdfs using PyPDF.
-- 
+- When taking Nougat Library. The context wasnt seperated with the "/n" as the nougat responded back with an Object of the PDF Scanned.
 
 ---
 
