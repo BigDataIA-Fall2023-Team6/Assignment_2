@@ -151,8 +151,8 @@ If you encounter any issues or have suggestions for improvements, please feel fr
   - NUID 
   - Email sharma.dil@northeastern.edu
 - Vivek H
-  - NUID 
-  - Email 
+  - NUID 002762662
+  - Email hanagoji.v@northeastern.edu
 
 ## Individual Distribution
 
