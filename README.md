@@ -31,7 +31,7 @@ In the era of digital information, the extraction of textual content from PDF do
 
 ### Architecture 
 
-![alt text]()
+![alt text](https://img.youtube.com/vi/cE4fn5nQBd8/0.jpg)
 
 
 ### Project Structure
